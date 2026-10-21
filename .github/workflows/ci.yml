@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test & build (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke test the CLI
+        if: matrix.node == 22
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node dist/cli.js --version
+          node dist/cli.js check sindresorhus/got --json > report.json
+          node -e "const r=require('./report.json'); if (typeof r.score !== 'number' || !r.checks.length) process.exit(1)"
+          node dist/cli.js badge sindresorhus/got --output badge.svg
+          node -e "const fs=require('fs'); if (!fs.readFileSync('badge.svg','utf8').includes('<svg')) process.exit(1)"
