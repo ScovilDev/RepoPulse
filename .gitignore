@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+coverage/
+
+# generated reports
+report.html
+repopulse.svg
+
+# local secrets
+.env
+.env.*
+!.env.example
+
+# logs and editor junk
+*.log
+.DS_Store
